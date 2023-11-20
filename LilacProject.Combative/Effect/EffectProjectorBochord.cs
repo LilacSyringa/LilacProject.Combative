@@ -1,5 +1,6 @@
 ﻿using LilacProject.Combative.Effect.Instance.Constructs;
 using LilacProject.Combative.Effect.Instance.Active;
+using LilacProject.Combative.Effect.Additives.Constructs;
 
 namespace LilacProject.Combative.Effect;
 
@@ -68,9 +69,9 @@ public abstract class EffectProjectorBochord
     ///     All the functions that handle building the additives are inside of <see cref="IEffectInstanceConstruct"/>.
     /// </param>
     /// <param name="handle_pool">The object that a <see cref="HandledEffectInstance"/> needs to cycle through different <see cref="IEffectHandle"/>. This can be null if it's not expected to be a <see cref="HandledEffectInstance"/></param>
-    protected void AddEffectProjector(IEffectInstanceConstruct constructs, CustomEffectInstanceBuilder? custom_projectorbuilder = null, EffectHandlePool? handle_pool = null)
+    protected void AddEffectProjector(IEffectInstanceConstruct constructs, IList<EffectAdditiveConstruct> additive_constructs, EffectHandlePool handle_pool, CustomEffectInstanceBuilder? custom_projectorbuilder = null)
     {
-        projectors.Add(constructs.NameID(), EffectBuilder.BuildProjector(constructs, custom_projectorbuilder, handle_pool));
+        projectors.Add(constructs.NameID(), EffectBuilder.BuildProjector(constructs, additive_constructs, handle_pool, custom_projectorbuilder));
     }
 
     /// <summary>
@@ -83,9 +84,9 @@ public abstract class EffectProjectorBochord
     ///     All the functions that handle building the additives are inside of <see cref="IEffectInstanceConstruct"/>.
     /// </param>
     /// <param name="pool_grabber">A function which returns a <see cref="EffectHandlePool"/>. This cannot be null if the <see cref="IEffectInstanceConstruct"/> returns a <see cref="HandledEffectInstance"/></param>
-    protected void AddEffectProjector(IEffectInstanceConstruct constructs, CustomEffectInstanceBuilder? custom_projectorbuilder = null, GetEffectHandlePool ? pool_grabber = null)
+    protected void AddEffectProjector(IEffectInstanceConstruct constructs, IList<EffectAdditiveConstruct> additive_constructs, GetEffectHandlePool pool_grabber, CustomEffectInstanceBuilder? custom_projectorbuilder = null)
     {
-        projectors.Add(constructs.NameID(), EffectBuilder.BuildProjector(constructs, custom_projectorbuilder, pool_grabber));
+        projectors.Add(constructs.NameID(), EffectBuilder.BuildProjector(constructs, additive_constructs, pool_grabber, custom_projectorbuilder));
     }
 
     public static IEnumerable<IEffectProjector> GetProjectors(IEnumerable<string> names) => Instance[names];

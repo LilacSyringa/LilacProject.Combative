@@ -2,24 +2,23 @@
 using LilacProject.Combative.Effect.Additives.Active;
 using LilacProject.Combative.Effect.Additives;
 using LilacProject.Combative.Effect.Instance.Active;
-using LilacProject.Combative.Compatibility;
 using System.Collections.Immutable;
 
 namespace LilacProject.Combative.Effect.Instance.Constructs;
 public static class EffectBuilder
 {
-    internal static IEffectProjector BuildProjector(IEffectInstanceConstruct constructs, EffectProjectorBochord.CustomEffectInstanceBuilder? custom_builder, object? pooler)
+    internal static IEffectProjector BuildProjector(IEffectInstanceConstruct constructs, IList<EffectAdditiveConstruct> additive_constructs, object pooler, EffectProjectorBochord.CustomEffectInstanceBuilder? custom_builder)
     {
         EffectInstance instance = constructs.BuildInstance();
 
         if (instance is DirectEffectInstance direct)
         {
-            CompleteEffectInitialise(direct, BuildAdditives(constructs));
+            CompleteEffectInitialise(direct, BuildAdditives(additive_constructs));
             return direct;
         }
         else if (instance is UnhandledEffectInstance unhandled)
         {
-            return new UnhandledEffectInstancePool(constructs, unhandled);
+            return new UnhandledEffectInstancePool(constructs, additive_constructs, unhandled);
         }
         else if (instance is HandledEffectInstance handled)
         {
@@ -32,7 +31,7 @@ public static class EffectBuilder
             else if (pooler == null) throw new ArgumentNullException(nameof(pooler));
             else throw new InvalidCastException();
 
-            return new HandledEffectInstancePool(handle_pool, constructs, handled);
+            return new HandledEffectInstancePool(handle_pool, constructs, additive_constructs,  handled);
         }
         else if (custom_builder != null) return custom_builder(constructs, instance);
         else throw new InvalidCastException($"You must inherit from {nameof(DirectEffectInstance)}, {nameof(UnhandledEffectInstance)}, {nameof(HandledEffectInstance)} or define a non-null overload for EffectProjectorLibrary.Custom_projectorbuilder");
@@ -42,9 +41,8 @@ public static class EffectBuilder
     /// The additives returned here are partially initialised. With the only initialisation methods left are on <see cref="CompleteEffectInitialise(EffectInstance, ImmutableArray{EffectAdditive})"/>.
     /// </summary>
     /// <returns>Pass the result to <see cref="CompleteEffectInitialise(EffectInstance, ImmutableArray{EffectAdditive)"/></returns>
-    public static ImmutableArray<EffectAdditive> BuildAdditives(IEffectInstanceConstruct constructs)
+    public static ImmutableArray<EffectAdditive> BuildAdditives(IList<EffectAdditiveConstruct> additive_constructs)
     {
-        IList<EffectAdditiveConstruct> additive_constructs = constructs.GetEffectAdditiveConstructs();
         int len = additive_constructs.Count;
 
         EffectAdditive[] effect_additives = new EffectAdditive[len];
@@ -81,7 +79,7 @@ public static class EffectBuilder
     /// The additives returned here are partially initialised. With the only initialisation methods left are on <see cref="CompleteEffectInitialise(EffectInstance, ImmutableArray{EffectAdditive})"/>.
     /// </summary>
     /// <returns>Pass the result to <see cref="CompleteEffectInitialise(EffectInstance, ImmutableArray{EffectAdditive})"/></returns>
-    public static ImmutableArray<EffectAdditive> BuildAdditivesWithCommons(IEffectInstanceConstruct constructs, ImmutableArray<EffectAdditive> cached_additives)
+    public static ImmutableArray<EffectAdditive> BuildAdditivesWithCommons(IList<EffectAdditiveConstruct> additive_constructs, ImmutableArray<EffectAdditive> cached_additives)
     {
         static IEnumerable<EffectAdditive> Internal(IList<EffectAdditiveConstruct> effect_constructs, ImmutableArray<EffectAdditive> cached_additives)
         {
@@ -107,8 +105,6 @@ public static class EffectBuilder
                 yield return effect_additive;
             }
         }
-
-        IList<EffectAdditiveConstruct> additive_constructs = constructs.GetEffectAdditiveConstructs();
 
         ImmutableArray<EffectAdditive> result = Internal(additive_constructs, cached_additives).ToImmutableArray();
 

@@ -1,6 +1,7 @@
-﻿using LilacProject.Combative.Effect.Instance.Constructs;
-using LilacProject.Combative.Effect.Instance.Active;
+﻿using LilacProject.Combative.Effect.Additives.Constructs;
 using LilacProject.Combative.Effect.Additives.Active;
+using LilacProject.Combative.Effect.Instance.Constructs;
+using LilacProject.Combative.Effect.Instance.Active;
 using LilacProject.Combative.Weaponry;
 using System.Collections.Immutable;
 
@@ -11,14 +12,14 @@ namespace LilacProject.Combative.Effect.Instance;
 /// </summary>
 public sealed class UnhandledEffectInstancePool : IEffectProjector
 {
-    internal UnhandledEffectInstancePool(IEffectInstanceConstruct effect_construct, UnhandledEffectInstance? first = null)
+    internal UnhandledEffectInstancePool(IEffectInstanceConstruct effect_construct, IList<EffectAdditiveConstruct> additive_constructs, UnhandledEffectInstance? first = null)
     {
+        this.additive_constructs = additive_constructs;
         this.effect_construct = effect_construct;
-
 
         first ??= (UnhandledEffectInstance)effect_construct.BuildInstance();
 
-        ImmutableArray<EffectAdditive> additives = EffectBuilder.BuildAdditives(effect_construct);
+        ImmutableArray<EffectAdditive> additives = EffectBuilder.BuildAdditives(additive_constructs);
         EffectBuilder.CompleteEffectInitialise(first, additives);
 
         instances = new(1)
@@ -27,6 +28,7 @@ public sealed class UnhandledEffectInstancePool : IEffectProjector
         };
     }
 
+    private readonly IList<EffectAdditiveConstruct> additive_constructs;
     private readonly IEffectInstanceConstruct effect_construct;
     private readonly List<UnhandledEffectInstance> instances;
 
@@ -37,7 +39,7 @@ public sealed class UnhandledEffectInstancePool : IEffectProjector
     /// <summary>
     /// How many Instances in the pool.
     /// </summary>
-    public int Count => instances.Count;
+    public int PoolCount => instances.Count;
 
     /// <exception cref="ArgumentOutOfRangeException">Count is or less than 0.</exception>
     public void AddPools(int count)
@@ -47,7 +49,7 @@ public sealed class UnhandledEffectInstancePool : IEffectProjector
         for (int i = 0; i < count; i++)
         {
             UnhandledEffectInstance instance = (UnhandledEffectInstance)effect_construct.BuildInstance();
-            ImmutableArray<EffectAdditive> additives = EffectBuilder.BuildAdditivesWithCommons(effect_construct, instances[0].EffectAdditives);
+            ImmutableArray<EffectAdditive> additives = EffectBuilder.BuildAdditivesWithCommons(additive_constructs, instances[0].EffectAdditives);
             EffectBuilder.CompleteEffectInitialise(instance, additives);
 
             instances.Add(instance);
@@ -67,12 +69,12 @@ public sealed class UnhandledEffectInstancePool : IEffectProjector
         int i = 0;
         for (; i < count && count > 1; i++)
         {
-            int j = Count - 1 - i;
+            int j = PoolCount - 1 - i;
             instances[j].ForcedCleanup();
             instances.RemoveAt(j);
         }
 
-        if (index >= Count) index = 0;
+        if (index >= PoolCount) index = 0;
 
         return i;
     }
@@ -87,6 +89,6 @@ public sealed class UnhandledEffectInstancePool : IEffectProjector
 
         curr_instance.ProjectInternal(in projection_data, component, unit);
 
-        index = ++index % Count;
+        index = ++index % PoolCount;
     }
 }

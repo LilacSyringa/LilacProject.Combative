@@ -71,7 +71,7 @@ public abstract class EffectAdditive
     /// <summary>
     /// An interface for <see cref="EffectAdditive"/>.
     /// <br/>
-    /// Implementing this interface dictates that the additive must have a <u>common</u> object in an <u>EffectInstancePool</u> where each <see cref="EffectInstance"/> are pooled along with <see cref="EffectAdditive"/> that adds to it.
+    /// Implementing this interface dictates that this additive must have a <u>common</u> object in an <u>EffectInstancePool</u> where each <see cref="EffectInstance"/> are pooled along with <see cref="EffectAdditive"/> that adds to it.
     /// <br/>
     /// Through this interface, a common reference will be constructed and provided by the Constructs.
     /// <br/>
@@ -80,11 +80,19 @@ public abstract class EffectAdditive
     /// <br/>
     /// <br/>
     /// Note: <see cref="EffectAdditive"/> is still constructed every time a new clone is added, if this is not what you want, see <see cref="CommonAdditiveAttribute"/> where the reference to an <see cref="EffectAdditive"/> itself is common to all instances in the pool.
+    /// <br/>
+    /// Note: Even with <see cref="CommonAdditiveAttribute"/>, it is still constructed for each <u>EffectInstancePool</u> or <see cref="DirectEffectInstance"/>, if this is still not what you want, just make a singleton.
     /// </summary>
     protected internal interface ICommonCompositor
     {
+        /// <summary>
+        /// Creates a new common object.
+        /// </summary>
         protected internal object BuildCommons();
 
+        /// <summary>
+        /// Gets and sets the common object field. Very different from <see cref="BuildCommons()"/>.
+        /// </summary>
         protected internal object CommonField { get; set; }
     }
 
@@ -97,6 +105,11 @@ public abstract class EffectAdditive
     /// Because this is used by multiple <see cref="EffectInstance"/>, the additive is completely exempted from all initialisation methods, such as methods that start with <u><b>Receive</b></u> like <see cref="EffectAdditive.RecieveAdditiveReference(ImmutableArray{EffectAdditive}, IEnumerable{EffectAdditive})"/>.
     /// <see cref="EffectAdditive.PostInitialize(EffectInstance)"/> is also not called. 
     /// Additives that are defined by this attribute are expected to only be initialised during the construction of the object.
+    /// <br/>
+    /// <br/>
+    /// Note: If what you need is the additive to have their own instances for each instance in the pool but need a common reference for each, see <see cref="ICommonCompositor"/>.
+    /// <br/>
+    /// Note: Even with <see cref="CommonAdditiveAttribute"/>, it is still constructed for each <u>EffectInstancePool</u> or <see cref="DirectEffectInstance"/>, if this is still not what you want, just make a singleton.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     protected internal class CommonAdditiveAttribute : Attribute { }
